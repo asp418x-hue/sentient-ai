@@ -1,0 +1,13 @@
+[package]
+name = "stuff"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.9"
+deep_causality = "0.15.1"
+inference = "0.3.0"
+litert = "0.2.1"
+subjective-time-expansion = "0.1.2"
+temporal-neural-solver = "0.1.2"
+tflite = "0.9.8"
