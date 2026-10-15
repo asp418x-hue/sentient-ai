@@ -1,8 +1,8 @@
 // src/main.rs
 mod cbt;
 
-use axum::{routing::get, Router};
-use cbt::{CbtEngine, CandidatePath};
+use axum::{Router, routing::get};
+use cbt::{CandidatePath, CbtEngine};
 
 #[tokio::main]
 async fn main() {
@@ -12,7 +12,7 @@ async fn main() {
 
     // Example run of a cognitive loop cycle
     let exam = engine.examine("SYSTEM_EVENT: Low-level module calibration requested.");
-    
+
     let candidates = vec![
         CandidatePath {
             id: "vector_a".to_string(),
@@ -51,8 +51,9 @@ async fn main() {
     // Initialize Axum server interface
     let app = Router::new().route("/health", get(|| async { "Sentient-AI Core Active" }));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
+        .await
+        .unwrap();
     println!("API Gateway bound to http://127.0.0.1:8080");
     axum::serve(listener, app).await.unwrap();
 }
-

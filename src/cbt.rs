@@ -10,8 +10,8 @@ pub struct ExaminationResult {
 pub struct CandidatePath {
     pub id: String,
     pub description: String,
-    pub resource_cost: u32,       // Lower footprint is prioritized
-    pub confidence_score: f32,    // Must be >= 0.70 to survive filtering
+    pub resource_cost: u32,    // Lower footprint is prioritized
+    pub confidence_score: f32, // Must be >= 0.70 to survive filtering
 }
 
 #[derive(Debug, Clone)]
@@ -41,7 +41,10 @@ impl CbtEngine {
     }
 
     /// Stage 2: Process of Elimination (Pruning & Optimization)
-    pub fn process_of_elimination(&self, candidates: Vec<CandidatePath>) -> Result<CandidatePath, String> {
+    pub fn process_of_elimination(
+        &self,
+        candidates: Vec<CandidatePath>,
+    ) -> Result<CandidatePath, String> {
         let mut viable_paths = Vec::new();
 
         for candidate in candidates {
@@ -53,12 +56,14 @@ impl CbtEngine {
         }
 
         if viable_paths.is_empty() {
-            return Err("All candidate paths failed the 70% confidence threshold requirement.".to_string());
+            return Err(
+                "All candidate paths failed the 70% confidence threshold requirement.".to_string(),
+            );
         }
 
         // Resource minimum filter: select the path with the lowest resource cost among viable candidates
         viable_paths.sort_by(|a, b| a.resource_cost.cmp(&b.resource_cost));
-        
+
         Ok(viable_paths.into_iter().next().unwrap())
     }
 
@@ -73,9 +78,15 @@ impl CbtEngine {
         for c in all_candidates {
             if c.id != selected.id {
                 let reason = if c.confidence_score < 0.70 {
-                    format!("Pruned: Confidence score {:.2} is below the 0.70 threshold", c.confidence_score)
+                    format!(
+                        "Pruned: Confidence score {:.2} is below the 0.70 threshold",
+                        c.confidence_score
+                    )
                 } else {
-                    format!("Pruned: Higher resource cost ({}) than optimal vector ({})", c.resource_cost, selected.resource_cost)
+                    format!(
+                        "Pruned: Higher resource cost ({}) than optimal vector ({})",
+                        c.resource_cost, selected.resource_cost
+                    )
                 };
                 eliminated.push((c.id.clone(), reason));
             }
@@ -89,4 +100,3 @@ impl CbtEngine {
         }
     }
 }
-
