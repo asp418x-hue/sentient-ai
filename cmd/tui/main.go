@@ -1,4 +1,4 @@
-package "sentient-ai";
+package main
 
 import (
 		"context"
@@ -7,7 +7,7 @@ import (
 
 					tea "github.com/charmbracelet/bubbletea"
 						"github.com/charmbracelet/lipgloss"
-							"sentient-ai/lexmatch"
+							"sentient-ai/m/v2/lexmatch"
 						)
 
 						type state int
@@ -27,7 +27,6 @@ import (
 																engine    *lexmatch.OCREngine
 															}
 
-															// Messages
 															type ocrResultMsg struct {
 																	text string
 																		err  error
@@ -54,66 +53,68 @@ import (
 																																					case tea.KeyMsg:
 																																								switch msg.String():
 																																										case "q", "ctrl+c":
-																																														m.engine.Close()
-																																																	return m, tea.Quit
-																																																			case "enter":
-																																																							if m.state == stateIdle || m.state == stateError {
-																																																												m.state = stateProcessing
-																																																																return m, runOCR(m.engine, m.imagePath)
-																																																																			}
-																																																																					}
+																																														if m.engine != nil {
+																																																			m.engine.Close()
+																																																						}
+																																																									return m, tea.Quit
+																																																											case "enter":
+																																																															if m.state == stateIdle || m.state == stateError {
+																																																																				m.state = stateProcessing
+																																																																								return m, runOCR(m.engine, m.imagePath)
+																																																																											}
+																																																																													}
 
-																																																																						case ocrResultMsg:
-																																																																									if msg.err != nil {
-																																																																													m.state = stateError
-																																																																																m.err = msg.err
-																																																																																		} else {
-																																																																																						m.state = stateSuccess
-																																																																																									m.result = msg.text
-																																																																																											}
-																																																																																												}
-																																																																																													return m, nil
-																																																																																												}
+																																																																														case ocrResultMsg:
+																																																																																	if msg.err != nil {
+																																																																																					m.state = stateError
+																																																																																								m.err = msg.err
+																																																																																										} else {
+																																																																																														m.state = stateSuccess
+																																																																																																	m.result = msg.text
+																																																																																																			}
+																																																																																																				}
+																																																																																																					return m, nil
+																																																																																																				}
 
-																																																																																												func (m *model) View() string {
-																																																																																														var s string
-																																																																																															switch m.state {
-																																																																																																	case stateIdle:
-																																																																																																				s = fmt.Sprintf("Ready to process target: %s\n\nPress [Enter] to start OCR or [q] to quit.", m.imagePath)
-																																																																																																					case stateProcessing:
-																																																																																																								s = "Running Leptonica preprocessing & Tesseract analysis..."
-																																																																																																									case stateSuccess:
-																																																																																																												s = fmt.Sprintf("OCR Extracted Text:\n\n%s\n\nPress [q] to exit.", m.result)
-																																																																																																													case stateError:
-																																																																																																																s = fmt.Sprintf("Error: %v\n\nPress [Enter] to retry or [q] to quit.", m.err)
-																																																																																																																	}
-																																																																																																																		return lipgloss.NewStyle().Padding(2).Render(s)
-																																																																																																																	}
+																																																																																																				func (m *model) View() string {
+																																																																																																						var s string
+																																																																																																							switch m.state {
+																																																																																																									case stateIdle:
+																																																																																																												s = fmt.Sprintf("Target Image: %s\n\nPress [Enter] to run OCR or [q] to quit.", m.imagePath)
+																																																																																																													case stateProcessing:
+																																																																																																																s = "Running Leptonica/Tesseract extraction..."
+																																																																																																																	case stateSuccess:
+																																																																																																																				s = fmt.Sprintf("Extracted Text:\n\n%s\n\nPress [q] to exit.", m.result)
+																																																																																																																					case stateError:
+																																																																																																																								s = fmt.Sprintf("Error: %v\n\nPress [Enter] to retry or [q] to quit.", m.err)
+																																																																																																																									}
+																																																																																																																										return lipgloss.NewStyle().Padding(2).Render(s)
+																																																																																																																									}
 
-																																																																																																																	func runOCR(engine *lexmatch.OCREngine, path string) tea.Cmd {
-																																																																																																																			return func() tea.Msg {
-																																																																																																																						ctx := context.Background()
-																																																																																																																								text, err := engine.ProcessImage(ctx, path)
-																																																																																																																										return ocrResultMsg{text: text, err: err}
-																																																																																																																											}
-																																																																																																																										}
-
-																																																																																																																										func main() {
-																																																																																																																												if len(os.Args) < 2 {
-																																																																																																																															fmt.Println("Usage: tui <path-to-image>")
-																																																																																																																																	os.Exit(1)
+																																																																																																																									func runOCR(engine *lexmatch.OCREngine, path string) tea.Cmd {
+																																																																																																																											return func() tea.Msg {
+																																																																																																																														ctx := context.Background()
+																																																																																																																																text, err := engine.ProcessImage(ctx, path)
+																																																																																																																																		return ocrResultMsg{text: text, err: err}
+																																																																																																																																			}
 																																																																																																																																		}
 
-																																																																																																																																			m, err := initialModel(os.Args[1])
-																																																																																																																																				if err != nil {
-																																																																																																																																							fmt.Printf("Initialization error: %v\n", err)
+																																																																																																																																		func main() {
+																																																																																																																																				if len(os.Args) < 2 {
+																																																																																																																																							fmt.Println("Usage: go run ./cmd/tui <path-to-image>")
 																																																																																																																																									os.Exit(1)
 																																																																																																																																										}
 
-																																																																																																																																											p := tea.NewProgram(m)
-																																																																																																																																												if _, err := p.Run(); err != nil {
-																																																																																																																																															fmt.Printf("Error running TUI: %v\n", err)
+																																																																																																																																											m, err := initialModel(os.Args[1])
+																																																																																																																																												if err != nil {
+																																																																																																																																															fmt.Printf("Initialization error: %v\n", err)
 																																																																																																																																																	os.Exit(1)
 																																																																																																																																																		}
-																																																																																																																																																	}
+
+																																																																																																																																																			p := tea.NewProgram(m)
+																																																																																																																																																				if _, err := p.Run(); err != nil {
+																																																																																																																																																							fmt.Printf("Error running program: %v\n", err)
+																																																																																																																																																									os.Exit(1)
+																																																																																																																																																										}
+																																																																																																																																																									}
 
