@@ -1,12 +1,10 @@
 use std::env;
+use crate::liblink_struct::CothinkSystem;
 
-pub fn init_bridge() -> CothinkSystem {
+pub fn init_bridge() -> Result<CothinkSystem, Box<dyn std::error::Error>> {
     // Point this to the absolute or relative path where libcothink_system.so lives
     let system_dir = env::var("COTHINK_SYSTEM_DIR").unwrap_or_else(|_| ".".into());
-    
-    unsafe {
-        CothinkSystem::load(system_dir)
-            .expect("Failed to load libcothink_system.so from its root directory")
-    }
+
+    Ok(unsafe { CothinkSystem::load(system_dir)? })
 }
 

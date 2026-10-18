@@ -1,55 +1,35 @@
 // src/main.rs
-mod cbt;
-
-use axum::{Router, routing::get};
-use cbt::{CandidatePath, CbtEngine};
+use sentient_ai::api::{self, ApiState};
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
     println!("Initializing Sentient-AI Core Node...");
 
-    let engine = CbtEngine::new();
-
-    // Example run of a cognitive loop cycle
-    let exam = engine.examine("SYSTEM_EVENT: Low-level module calibration requested.");
-
-    let candidates = vec![
-        CandidatePath {
-            id: "vector_a".to_string(),
-            description: "Direct bare-metal syscall hook with minimal overhead".to_string(),
-            resource_cost: 10,
-            confidence_score: 0.91,
-        },
-        CandidatePath {
-            id: "vector_b".to_string(),
-            description: "High-level framework wrapper with heavy abstraction".to_string(),
-            resource_cost: 75,
-            confidence_score: 0.88,
-        },
-        CandidatePath {
-            id: "vector_c".to_string(),
-            description: "Speculative fallback routine with unverified state".to_string(),
-            resource_cost: 12,
-            confidence_score: 0.52, // Will fail confidence gate
-        },
-    ];
-
-    match engine.process_of_elimination(candidates.clone()) {
-        Ok(selected) => {
-            let synopsis = engine.oem_synopsis(&exam, &candidates, &selected);
-            println!("\n--- OEM SYNOPSIS LOG ---");
-            println!("Observed State: {}", synopsis.observed_state);
-            for (id, reason) in synopsis.eliminated_vectors {
-                println!("Eliminated [{}]: {}", id, reason);
+    // The native system is optional for development runs. Set
+    // COTHINK_SYSTEM_DIR to enable the shared-library bridge.
+    let native = if std::env::var_os("COTHINK_SYSTEM_DIR").is_some() {
+        match sentient_ai::cothink_bridge::init_bridge() {
+            Ok(native) => match native.initialize() {
+                Ok(()) => {
+                    println!("Native cothink dispatch ready");
+                    Some(Arc::new(native))
+                }
+                Err(error) => {
+                    eprintln!("Native cothink initialization failed: {error}");
+                    None
+                }
+            },
+            Err(error) => {
+                eprintln!("Could not load native cothink library: {error}");
+                None
             }
-            println!("Action: {}", synopsis.chosen_action);
-            println!("Result: {}\n", synopsis.result_summary);
         }
-        Err(e) => eprintln!("Cognitive cycle halted: {}", e),
-    }
+    } else {
+        None
+    };
 
-    // Initialize Axum server interface
-    let app = Router::new().route("/health", get(|| async { "Sentient-AI Core Active" }));
+    let app = api::router(ApiState { native });
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await

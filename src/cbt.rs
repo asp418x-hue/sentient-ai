@@ -93,7 +93,10 @@ impl CbtEngine {
         }
 
         OemSynopsis {
-            observed_state: format!("Verified facts: {:?}", exam.verified_facts),
+            observed_state: format!(
+                "Observed telemetry: {}\nVerified facts: {:?}",
+                exam.raw_telemetry, exam.verified_facts
+            ),
             eliminated_vectors: eliminated,
             chosen_action: format!("Executed path [{}]: {}", selected.id, selected.description),
             result_summary: "Execution completed successfully within parameters.".to_string(),
