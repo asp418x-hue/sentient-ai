@@ -32,18 +32,11 @@ pub struct NativeAnomalyResult {
 
 type InitFn = unsafe extern "C" fn() -> i32;
 type GetFovFn = unsafe extern "C" fn(u64, *mut NativeFov) -> i32;
-type RecordEventFn =
-    unsafe extern "C" fn(u64, usize, *const c_char, bool, *const c_char) -> i32;
+type RecordEventFn = unsafe extern "C" fn(u64, usize, *const c_char, bool, *const c_char) -> i32;
 type ThermalSampleFn = unsafe extern "C" fn(u32, f64, f64, *mut NativeThermalSample) -> i32;
 type ClassifyFn = unsafe extern "C" fn(u64, *mut NativeAnomalyResult) -> i32;
-type DispatchFn = unsafe extern "C" fn(
-    u64,
-    *const usize,
-    usize,
-    *const c_char,
-    usize,
-    f64,
-) -> *mut c_char;
+type DispatchFn =
+    unsafe extern "C" fn(u64, *const usize, usize, *const c_char, usize, f64) -> *mut c_char;
 type ExecutePayloadFn = unsafe extern "C" fn(*const c_char) -> *mut c_char;
 type FreeStringFn = unsafe extern "C" fn(*mut c_char);
 
@@ -72,7 +65,8 @@ impl CothinkSystem {
         let thermal_sample = unsafe { *lib.get::<ThermalSampleFn>(b"cothink_thermal_sample\0")? };
         let classify = unsafe { *lib.get::<ClassifyFn>(b"cothink_classify\0")? };
         let dispatch_agents = unsafe { *lib.get::<DispatchFn>(b"cothink_dispatch_agents\0")? };
-        let execute_payload = unsafe { *lib.get::<ExecutePayloadFn>(b"cothink_execute_payload\0")? };
+        let execute_payload =
+            unsafe { *lib.get::<ExecutePayloadFn>(b"cothink_execute_payload\0")? };
         let free_string = unsafe { *lib.get::<FreeStringFn>(b"cothink_free_string\0")? };
 
         Ok(Self {
@@ -211,7 +205,8 @@ fn status_result(status: i32) -> Result<(), String> {
     if status == 0 {
         Ok(())
     } else {
-        Err(format!("native cothink function failed with status {status}"))
+        Err(format!(
+            "native cothink function failed with status {status}"
+        ))
     }
 }
-

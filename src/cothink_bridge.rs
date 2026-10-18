@@ -1,5 +1,5 @@
-use std::env;
 use crate::liblink_struct::CothinkSystem;
+use std::env;
 
 pub fn init_bridge() -> Result<CothinkSystem, Box<dyn std::error::Error>> {
     // Point this to the absolute or relative path where libcothink_system.so lives
@@ -7,4 +7,3 @@ pub fn init_bridge() -> Result<CothinkSystem, Box<dyn std::error::Error>> {
 
     Ok(unsafe { CothinkSystem::load(system_dir)? })
 }
-

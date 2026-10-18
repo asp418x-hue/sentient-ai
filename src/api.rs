@@ -171,7 +171,10 @@ mod tests {
     fn rejects_empty_duplicate_and_oversized_dispatches() {
         let mut empty = request();
         empty.task_ids.clear();
-        assert_eq!(validate_request(&empty).unwrap_err().0, StatusCode::BAD_REQUEST);
+        assert_eq!(
+            validate_request(&empty).unwrap_err().0,
+            StatusCode::BAD_REQUEST
+        );
 
         let mut duplicate = request();
         duplicate.task_ids = vec![1, 1];
