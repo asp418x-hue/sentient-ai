@@ -1,0 +1,4 @@
+[submodule "cothink-system"]
+	path = cothink-system
+	url = https://github.com/asp418x-hue/cothink-system.git
+	branch = Cothink-Dart
